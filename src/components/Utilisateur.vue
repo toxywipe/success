@@ -258,24 +258,48 @@ const confirmDeleteUser = (utilisateur) => {
 
 // Fonction pour confirmer la suppression des utilisateurs sélectionnés
 const confirmDeleteSelectedUsers = () => {
-  usersToDelete.value = utilisateurs.value.filter(user => selectedUsers.value.includes(user.id_utilisateur));
+  usersToDelete.value = utilisateurs.value.filter(u => selectedUsers.value.includes(u.id_utilisateur));
   showConfirmModal.value = true;
 };
 
+
 // Fonction pour supprimer les utilisateurs
 const deleteUsers = async () => {
-  const { error } = await supabase
-    .from("utilisateur")
-    .delete()
-    .in("id_utilisateur", usersToDelete.value.map(user => user.id_utilisateur));
+  if (!usersToDelete.value.length) return; // Vérifie qu'on a des utilisateurs sélectionnés
 
-  if (error) {
-    console.error("Erreur lors de la suppression des utilisateurs:", error);
-  } else {
-    fetchUtilisateurs();
-    closeConfirmModal();
+  const idsUtilisateurs = usersToDelete.value.map(utilisateur => utilisateur.id_utilisateur);
+
+  // 1. Supprimer d'abord dans appartenir
+  const { error: errorAppartenir } = await supabase
+    .from('appartenir')
+    .delete()
+    .in('id_utilisateur', idsUtilisateurs);
+
+  if (errorAppartenir) {
+    console.error('Erreur en supprimant dans appartenir :', errorAppartenir);
+    return;
   }
+
+  // 2. Ensuite supprimer les utilisateurs
+  const { error: errorUtilisateur } = await supabase
+    .from('utilisateur')
+    .delete()
+    .in('id_utilisateur', idsUtilisateurs);
+
+  if (errorUtilisateur) {
+    console.error('Erreur en supprimant les utilisateurs :', errorUtilisateur);
+    return;
+  }
+
+  // 3. Rafraîchir la liste
+  await fetchUtilisateurs();
+
+  // 4. Fermer la modale et nettoyer
+  showConfirmModal.value = false;
+  usersToDelete.value = [];
+  selectedUsers.value = [];
 };
+
 
 // Fonction pour fermer la modale de confirmation
 const closeConfirmModal = () => {

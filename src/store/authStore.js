@@ -31,7 +31,7 @@ export const useAuthStore = defineStore('auth', {
       }
 
       // Sauvegarder la session avec une date d'expiration
-      const expiry = Date.now() + 15 * 60 * 1000; // TTL : 15 minutes
+      const expiry = Date.now() + 30 * 60 * 1000; // TTL : 30 minutes
       localStorage.setItem(
         'session',
         JSON.stringify({
@@ -91,7 +91,7 @@ export const useAuthStore = defineStore('auth', {
       this.inactivityTimer = setTimeout(() => {
         this.logout();
         alert('Votre session a expiré en raison de l\'inactivité.');
-      }, 15 * 60 * 1000); // 15 minutes
+      }, 30 * 60 * 1000); // 30 minutes
     },
 
     clearInactivityTimer() {
